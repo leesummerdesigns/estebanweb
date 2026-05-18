@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" width="400" height="80" aria-label="Crimson Covenant ornamental divider">
+  <g fill="none" stroke="rgba(232,213,208,0.35)" stroke-linecap="round">
+    <line x1="0" y1="40" x2="160" y2="40" stroke-width="0.75"></line>
+    <line x1="240" y1="40" x2="400" y2="40" stroke-width="0.75"></line>
+    
+    <circle cx="0" cy="40" r="1" fill="rgba(232,213,208,0.5)"></circle>
+    <circle cx="400" cy="40" r="1" fill="rgba(232,213,208,0.5)"></circle>
+  </g>
+  <text x="200" y="48" text-anchor="middle" font-family="&#39;Cormorant Garamond&#39;, serif" font-size="28" fill="#c9b3ae">❧</text>
+  
+  <circle cx="180" cy="40" r="1.25" fill="rgba(232,213,208,0.4)"></circle>
+  <circle cx="220" cy="40" r="1.25" fill="rgba(232,213,208,0.4)"></circle>
+</svg>

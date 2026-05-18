@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" aria-label="Crimson Blood ornamental seal">
+  <defs>
+    <radialGradient id="sealBg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1a1014"></stop>
+      <stop offset="100%" stop-color="#050304"></stop>
+    </radialGradient>
+  </defs>
+  <circle cx="100" cy="100" r="98" fill="url(#sealBg)"></circle>
+  <circle cx="100" cy="100" r="98" fill="none" stroke="#8b0e1c" stroke-width="1"></circle>
+  <circle cx="100" cy="100" r="86" fill="none" stroke="rgba(232,213,208,0.18)" stroke-width="0.5"></circle>
+  <circle cx="100" cy="100" r="62" fill="none" stroke="rgba(232,213,208,0.12)" stroke-width="0.5" stroke-dasharray="1 4"></circle>
+
+  
+  <g stroke="#e8d5d0" stroke-width="1.25" fill="none" stroke-linecap="round">
+    <line x1="100" y1="58" x2="100" y2="148"></line>
+    <line x1="80" y1="78" x2="120" y2="78"></line>
+    
+    <circle cx="80" cy="78" r="1.5" fill="#e8d5d0"></circle>
+    <circle cx="120" cy="78" r="1.5" fill="#e8d5d0"></circle>
+    
+    <circle cx="100" cy="55" r="3"></circle>
+    
+    <path d="M97 148 L100 156 L103 148 Z" fill="#e8d5d0"></path>
+  </g>
+
+  
+  <path d="M100 162 C 100 162, 96 170, 96 174 C 96 177, 98 180, 100 180 C 102 180, 104 177, 104 174 C 104 170, 100 162, 100 162 Z" fill="#a8121f"></path>
+
+  
+  <text x="100" y="22" text-anchor="middle" font-family="serif" font-size="10" fill="rgba(232,213,208,0.6)">✦</text>
+  <text x="100" y="190" text-anchor="middle" font-family="serif" font-size="10" fill="rgba(232,213,208,0.6)">✦</text>
+  <text x="14" y="104" text-anchor="middle" font-family="serif" font-size="10" fill="rgba(232,213,208,0.6)">✦</text>
+  <text x="186" y="104" text-anchor="middle" font-family="serif" font-size="10" fill="rgba(232,213,208,0.6)">✦</text>
+</svg>
