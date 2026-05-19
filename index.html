@@ -1,0 +1,1270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Esteban Zupan — Painter of Quiet Catastrophe</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="colors_and_type.css">
+<script src="image-slot.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    position: relative;
+    color: var(--fg-2);
+    overflow-x: hidden;
+    background-color: #050304;
+    background-image: url('assets/gothicbackground.png');
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center var(--bgPos, 35%);
+  }
+  /* Veil sits over the body bg — fixed to viewport so it tracks scroll */
+  .veil {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 30%, rgba(139, 14, 28, 0.22) 0%, transparent 70%),
+      linear-gradient(180deg, rgba(5,3,4,0.22) 0%, rgba(5,3,4,0.38) 50%, rgba(5,3,4,0.55) 100%);
+  }
+
+  /* =========================================================
+     PARALLAX LAYERS
+     ========================================================= */
+  .stage {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Parallax stage — a sibling of main that hosts the sticky skull.
+     z-index: auto so it does NOT create a stacking context — this lets
+     the skull's mix-blend-mode reach all the way down to the cathedral bg. */
+  .parallax-stage {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .skull-layer {
+    position: sticky;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    margin-bottom: -100vh;
+    pointer-events: none;
+    display: block;
+  }
+  .skull-inner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: min(48.36vh, 35.88vw);
+    aspect-ratio: 1400 / 2023;
+    z-index: 2;             /* paints above veil (z:1), below main (z:3) */
+    transform-origin: 50% 50%;
+    pointer-events: none;
+    will-change: transform;
+    mix-blend-mode: screen;
+    transform:
+      translate3d(calc(-50% + var(--skullX, 0px)), calc(-50% + var(--skullY, 0px)), 0)
+      scale(var(--skullS, 1))
+      rotate(var(--skullR, 0deg));
+    animation: float 9s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { margin-top: 0; }
+    50%      { margin-top: -14px; }
+  }
+  .skull-inner img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    filter:
+      grayscale(1) brightness(2.2) contrast(0.95)
+      drop-shadow(0 30px 80px rgba(0,0,0,0.65))
+      drop-shadow(0 0 60px rgba(255,255,255,0.18));
+    opacity: calc(0.768 * var(--skullO, 1));
+    transition: opacity 120ms linear;
+  }
+
+  /* Film grain on top of everything */
+  .grain {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0.08;
+    mix-blend-mode: overlay;
+    background-image: var(--grain-overlay);
+    background-size: 240px 240px;
+  }
+
+  /* =========================================================
+     LIGHTNING STORM — triggered while scrolling
+     ========================================================= */
+  .storm {
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .storm .flash {
+    position: absolute;
+    inset: 0;
+    background: white;
+    opacity: 0;
+    mix-blend-mode: screen;
+    transition: opacity 80ms linear;
+  }
+  .storm .flash.dim { background: rgba(220, 230, 255, 0.6); }
+  .storm svg.bolt {
+    position: absolute;
+    top: -4vh;
+    width: auto;
+    height: 80vh;
+    opacity: 0;
+    filter:
+      drop-shadow(0 0 12px rgba(255,255,255,0.95))
+      drop-shadow(0 0 48px rgba(190, 210, 255, 0.75))
+      drop-shadow(0 0 120px rgba(140, 170, 255, 0.4));
+    transform-origin: top center;
+    will-change: opacity, transform;
+  }
+  @keyframes boltStrike {
+    0%   { opacity: 0; transform: scaleY(0.1) translateY(-10px); }
+    8%   { opacity: 1; transform: scaleY(1) translateY(0); }
+    14%  { opacity: 0.2; }
+    22%  { opacity: 1; }
+    100% { opacity: 0; transform: scaleY(1) translateY(0); }
+  }
+  @keyframes flashPulse {
+    0%   { opacity: 0; }
+    8%   { opacity: var(--peak, 0.85); }
+    20%  { opacity: 0.1; }
+    32%  { opacity: var(--peak, 0.85); }
+    100% { opacity: 0; }
+  }
+
+  /* OLD: removed — skull is now inside .parallax-stage as sticky */
+  /* soft halo behind the skull */
+  .skull-layer::before {
+    content: "";
+    position: absolute;
+    inset: 8% 10%;
+    background: radial-gradient(ellipse at 50% 38%, rgba(139, 14, 28, 0.22) 0%, transparent 60%);
+    filter: blur(40px);
+    z-index: -1;
+  }
+
+  /* =========================================================
+     CONTENT — flows above skull
+     ========================================================= */
+  main {
+    position: relative;
+    z-index: 3;
+    /* Content sits above veil (z:1) and parallax-stage (z:2) */
+  }
+  section {
+    position: relative;
+    padding: var(--space-10) clamp(24px, 6vw, 96px);
+  }
+
+  /* Top nav — feels engraved into the stone */
+  .topbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 22px clamp(24px, 6vw, 64px);
+    pointer-events: none;
+  }
+  .topbar > * { pointer-events: auto; }
+  .topbar.scrolled {
+    background: linear-gradient(180deg, rgba(5,3,4,0.7) 0%, rgba(5,3,4,0) 100%);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .brand {
+    font-family: var(--font-display);
+    font-size: 22px;
+    color: var(--fg-1);
+    letter-spacing: 0.04em;
+    line-height: 1;
+    text-decoration: none;
+    border: 0;
+  }
+  .brand .dot { color: var(--blood-500); }
+  nav.menu {
+    display: flex;
+    gap: var(--space-6);
+  }
+  nav.menu a {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+    color: var(--fg-3);
+    border: 0;
+    padding-bottom: 4px;
+    position: relative;
+  }
+  nav.menu a::after {
+    content: "";
+    position: absolute;
+    left: 50%; right: 50%;
+    bottom: 0;
+    height: 1px;
+    background: var(--blood-500);
+    transition: left var(--dur-base) var(--ease-out), right var(--dur-base) var(--ease-out);
+  }
+  nav.menu a:hover { color: var(--bone-100); }
+  nav.menu a:hover::after { left: 0; right: 0; }
+
+  /* =========================================================
+     HERO
+     ========================================================= */
+  .hero {
+    min-height: 100vh;
+    padding-top: 6vh;
+    padding-bottom: var(--space-9);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    text-align: left;
+    align-items: flex-start;
+  }
+  .hero .eyebrow { margin-top: 4vh; }
+  .hero .eyebrow {
+    color: var(--bone-300);
+    margin-bottom: var(--space-5);
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(43px, 8.4vw, 120px);
+    line-height: 0.92;
+    color: var(--bone-100);
+    letter-spacing: -0.01em;
+    margin: 0;
+    /* slight engraved feel */
+    text-shadow:
+      0 1px 0 rgba(0,0,0,0.6),
+      0 0 80px rgba(139, 14, 28, 0.2);
+  }
+  .hero h1 .amp {
+    display: block;
+    font-size: 0.42em;
+    color: var(--blood-500);
+    margin: 0.2em 0;
+    font-family: var(--font-serif);
+    font-style: italic;
+    letter-spacing: var(--tracking-wide);
+    text-transform: none;
+    font-weight: 400;
+  }
+
+  .hero .lede {
+    max-width: 56ch;
+    margin: var(--space-6) 0 0;
+    font-family: 'Cormorant Garamond', var(--font-serif);
+    font-style: italic;
+    font-size: clamp(18px, 1.4vw, 22px);
+    line-height: 1.5;
+    color: var(--bone-200);
+    text-wrap: balance;
+  }
+  .hero .meta {
+    margin-top: var(--space-7);
+    display: flex;
+    justify-content: flex-start;
+    gap: var(--space-6);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+    color: var(--fg-4);
+  }
+  .hero .meta .sep { color: var(--blood-700); }
+
+  /* scroll cue */
+  .scroll-cue {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+    color: var(--fg-4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .scroll-cue .line {
+    width: 1px;
+    height: 56px;
+    background: linear-gradient(180deg, transparent, var(--bone-400));
+    animation: drip 2.4s ease-in-out infinite;
+  }
+  @keyframes drip {
+    0%   { transform: scaleY(0); transform-origin: top; opacity: 0; }
+    30%  { opacity: 1; }
+    70%  { transform: scaleY(1); transform-origin: top; opacity: 1; }
+    100% { transform: scaleY(1); transform-origin: bottom; opacity: 0; }
+  }
+
+  /* =========================================================
+     ORNAMENT DIVIDER
+     ========================================================= */
+  .ornament {
+    display: flex;
+    align-items: center;
+    gap: var(--space-5);
+    color: var(--bone-400);
+    font-family: var(--font-serif);
+    font-size: 22px;
+    line-height: 1;
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .ornament::before, .ornament::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-strong), transparent);
+  }
+
+  /* =========================================================
+     SECTION HEADERS
+     ========================================================= */
+  .section-head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: var(--space-7);
+    margin-bottom: var(--space-9);
+    padding-bottom: var(--space-5);
+    border-bottom: 1px solid var(--border-default);
+  }
+  .section-head .num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+    color: var(--blood-500);
+    margin-bottom: var(--space-3);
+  }
+  .section-head h2 {
+    font-family: var(--font-display);
+    font-size: clamp(48px, 8vw, 110px);
+    color: var(--bone-100);
+    line-height: 0.9;
+    letter-spacing: -0.01em;
+  }
+  .section-head .aside {
+    font-family: var(--font-serif);
+    font-style: italic;
+    color: var(--bone-300);
+    font-size: 16px;
+    max-width: 28ch;
+    text-align: right;
+    line-height: 1.5;
+  }
+
+  /* =========================================================
+     WORKS GRID
+     ========================================================= */
+  .works {
+    column-count: 3;
+    column-gap: var(--space-5);
+  }
+  .work {
+    display: block;
+    break-inside: avoid;
+    margin: 0 0 var(--space-5);
+    width: 100%;
+  }
+  .work {
+    position: relative;
+    background: rgba(17, 10, 13, 0.78);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    border: 1px solid var(--border-default);
+    transition: border-color var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
+    z-index: 2;
+  }
+  .work:hover {
+    border-color: var(--border-blood);
+  }
+  .work .plate {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: linear-gradient(135deg, var(--void-700), var(--void-800));
+    position: relative;
+    overflow: hidden;
+  }
+  .work .plate image-slot {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  /* aspect-ratio comes from each <article style="aspect-ratio: ..."> */
+
+  .work .caption {
+    position: absolute;
+    left: 16px;
+    bottom: 14px;
+    right: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    pointer-events: none;
+  }
+  .work .caption .title {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 18px;
+    color: var(--bone-100);
+    line-height: 1.2;
+    max-width: 70%;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  }
+  .work .caption .meta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+    color: var(--bone-300);
+    text-align: right;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+  }
+  .work .corner {
+    position: absolute;
+    top: 12px;
+    left: 14px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+    color: var(--bone-400);
+    pointer-events: none;
+  }
+
+  /* =========================================================
+     ABOUT
+     ========================================================= */
+  .about {
+    display: grid;
+    grid-template-columns: 5fr 7fr;
+    gap: var(--space-9);
+    align-items: start;
+  }
+  .about .col-left {
+    position: sticky;
+    top: 120px;
+  }
+  .about .col-left .eyebrow {
+    margin-bottom: var(--space-4);
+  }
+  .about h3 {
+    font-family: var(--font-display);
+    font-size: clamp(36px, 4.5vw, 64px);
+    color: var(--bone-100);
+    line-height: 1;
+    font-style: normal;
+    font-weight: 400;
+    margin-bottom: var(--space-5);
+  }
+  .about .col-right {
+    padding-top: calc(var(--space-4) + clamp(36px, 4.5vw, 64px));
+  }
+  .about .col-right p {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    line-height: 1.65;
+    color: var(--bone-200);
+    margin: 0 0 var(--space-5);
+    max-width: 62ch;
+  }
+  .about .col-right p.lede {
+    font-style: italic;
+    font-size: 22px;
+    color: var(--bone-100);
+    line-height: 1.4;
+  }
+  .about .col-right p .drop {
+    font-family: var(--font-display);
+    font-size: 3.2em;
+    float: left;
+    line-height: 0.8;
+    padding: 0.12em 0.18em 0 0;
+    color: var(--blood-500);
+  }
+  .about .portrait {
+    margin: var(--space-6) 0 0;
+    padding: 0;
+  }
+  .about .portrait img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    object-position: 50% 35%;
+    filter: grayscale(1) contrast(1.05) brightness(0.92);
+    border: 1px solid var(--border-default);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+  }
+  .about .portrait figcaption {
+    margin-top: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+    color: var(--bone-400);
+  }
+  .about .pull {
+    margin: var(--space-7) 0;
+    padding: var(--space-5) 0 var(--space-5) var(--space-5);
+    border-left: 1px solid var(--border-blood);
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 24px;
+    color: var(--bone-100);
+    line-height: 1.4;
+    max-width: 48ch;
+  }
+  .about .pull .attr {
+    display: block;
+    margin-top: var(--space-3);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+    font-style: normal;
+    color: var(--bone-400);
+  }
+
+  /* =========================================================
+     INDEX (exhibitions list)
+     ========================================================= */
+  .ledger {
+    border-top: 1px solid var(--border-default);
+  }
+  .ledger .row {
+    display: grid;
+    grid-template-columns: 80px 1fr 1.3fr 100px;
+    gap: var(--space-5);
+    padding: var(--space-5) 0;
+    border-bottom: 1px solid var(--border-default);
+    align-items: baseline;
+    transition: background var(--dur-base) var(--ease-out);
+  }
+  .ledger .row:hover { background: rgba(139, 14, 28, 0.06); }
+  .ledger .row .year {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--blood-500);
+    letter-spacing: var(--tracking-wider);
+  }
+  .ledger .row .title {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 22px;
+    color: var(--bone-100);
+    line-height: 1.25;
+  }
+  .ledger .row .venue {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    color: var(--bone-300);
+  }
+  .ledger .row .city {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+    color: var(--bone-400);
+    text-align: right;
+  }
+
+  /* =========================================================
+     CONTACT / FOOTER
+     ========================================================= */
+  .contact {
+    text-align: center;
+    padding-top: var(--space-10);
+    padding-bottom: var(--space-9);
+  }
+  .contact .eyebrow { color: var(--bone-300); margin-bottom: var(--space-5); }
+  .contact h2 {
+    font-family: var(--font-display);
+    font-size: clamp(56px, 9vw, 132px);
+    line-height: 0.92;
+    color: var(--bone-100);
+    margin-bottom: var(--space-6);
+  }
+  .contact .email {
+    display: inline-block;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: clamp(24px, 3vw, 40px);
+    color: var(--bone-100);
+    border-bottom: 1px solid var(--border-blood);
+    padding-bottom: 8px;
+    margin-bottom: var(--space-7);
+  }
+  .contact .email:hover { color: var(--blood-300); }
+  .contact .socials {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-5);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+    color: var(--bone-300);
+  }
+  .contact .socials a {
+    color: var(--bone-300);
+    border: 0;
+    padding: 8px 14px;
+    border: 1px solid var(--border-default);
+    transition: all var(--dur-base) var(--ease-out);
+  }
+  .contact .socials a:hover {
+    border-color: var(--border-blood);
+    color: var(--bone-100);
+  }
+
+  footer {
+    position: relative;
+    z-index: 2;
+    padding: var(--space-7) clamp(24px, 6vw, 96px) var(--space-6);
+    border-top: 1px solid var(--border-default);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: var(--tracking-widest);
+    text-transform: uppercase;
+    color: var(--bone-500);
+  }
+  footer .seal { color: var(--blood-700); font-family: var(--font-serif); font-size: 22px; font-style: italic; letter-spacing: 0; }
+
+  /* =========================================================
+     RESPONSIVE
+     ========================================================= */
+  @media (max-width: 900px) {
+    .works { column-count: 2; }
+    .work.a, .work.b, .work.c, .work.d, .work.e, .work.f, .work.g { grid-column: auto; }
+    .about { grid-template-columns: 1fr; gap: var(--space-6); }
+    .about .col-left { position: static; }
+    .about .col-right { padding-top: 0; }
+    .section-head { grid-template-columns: 1fr; }
+    .section-head .aside { text-align: left; }
+    .ledger .row { grid-template-columns: 60px 1fr; gap: var(--space-3); }
+    .ledger .row .venue, .ledger .row .city { grid-column: 2; text-align: left; }
+    .topbar nav.menu { display: none; }
+  }
+
+  /* fade-up on enter */
+  .reveal { opacity: 0; transform: translateY(28px); transition: opacity 1s var(--ease-rite), transform 1s var(--ease-rite); }
+  .reveal.in { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- Fixed background layers -->
+<div class="veil"></div>
+<div class="parallax-stage" aria-hidden="true">
+  <div class="skull-layer">
+    <div class="skull-inner">
+      <img src="assets/skull-floating.png" alt="">
+    </div>
+  </div>
+</div>
+<div class="grain"></div>
+<div class="storm" aria-hidden="true">
+  <div class="flash" id="storm-flash"></div>
+</div>
+
+<!-- Top bar -->
+<header class="topbar" id="topbar">
+  <nav class="menu">
+    <a href="#works">Works</a>
+    <a href="#about">Artist</a>
+    <a href="#contact">Contact</a>
+  </nav>
+</header>
+
+<main id="top">
+
+  <!-- ============== HERO ============== -->
+  <section class="hero">
+    <h1 style="margin-top: 200px;">
+      Esteban
+      Zupan
+    </h1>
+    <p class="lede">
+      My art seeks to simultaneously unsettle and soothe, like beautiful flowers
+      whose fading is part of their grace. Each canvas transforms grief into beauty
+      and silence into revelation, inviting the viewer into an inner landscape where
+      sorrow and grace intertwine, solitude becomes sacred, and the heart speaks
+      softly, sheltered in shadow.
+    </p>
+    <div class="meta">
+      <span>All Rights belong to the artist and are under copyright</span>
+    </div>
+    <div class="scroll-cue">
+      <span>Descend</span>
+      <span class="line"></span>
+    </div>
+  </section>
+
+  <!-- ============== WORKS ============== -->
+  <section id="works" style="font-family: SingleGhost; font-weight: 300">
+    <header class="section-head reveal">
+      <div>
+        <div class="num">§ I — Selected works</div>
+        <h2>Selected Works</h2>
+      </div>
+      <p class="aside">
+</p>
+    </header>
+
+    <div class="works">
+      <article class="work a reveal" style="aspect-ratio: 3508 / 4961;">
+        <div class="plate">
+          <image-slot id="work-1" shape="rect" src="assets/Flowers_A3.jpg" placeholder="Drop artwork"></image-slot>
+        </div>
+        <span class="corner">№ 01</span>
+        <div class="caption">
+          <span class="title">Saint Velora, sleeping through the second cantor</span>
+          <span class="meta">Oil · linen · 180×140<br>2024</span>
+        </div>
+      </article>
+
+      <article class="work b reveal" style="aspect-ratio: 3508 / 4961;">
+        <div class="plate">
+          <image-slot id="work-2" shape="rect" src="assets/CatLady_A3.jpg" placeholder="Drop artwork"></image-slot>
+        </div>
+        <span class="corner">№ 02</span>
+        <div class="caption">
+          <span class="title" data-tweak="work2Title">When silence talks</span>
+          <span class="meta" data-tweak="work2Meta">Oil on canvas<br>80x120cm</span>
+        </div>
+      </article>
+
+      <article class="work c reveal" style="aspect-ratio: 3393 / 3321;">
+        <div class="plate">
+          <image-slot id="work-3" shape="rect" src="assets/Final_photo.jpg" placeholder="Drop artwork"></image-slot>
+        </div>
+        <span class="corner">№ 03</span>
+        <div class="caption">
+          <span class="title">Moth litany, in seven movements</span>
+          <span class="meta">Triptych<br>2022</span>
+        </div>
+      </article>
+
+      <article class="work d reveal" style="aspect-ratio: 2480 / 3508;">
+        <div class="plate">
+          <image-slot id="work-4" shape="rect" src="assets/Leopard_Print.jpg" placeholder="Drop artwork"></image-slot>
+        </div>
+        <span class="corner">№ 04</span>
+        <div class="caption">
+          <span class="title">The leopard's afternoon</span>
+          <span class="meta">Oil on canvas<br>2025</span>
+        </div>
+      </article>
+
+      <article class="work e reveal" style="aspect-ratio: 2480 / 3508;">
+        <div class="plate">
+          <image-slot id="work-5" shape="rect" src="assets/Squirrel_A3.jpg" placeholder="Drop artwork"></image-slot>
+        </div>
+        <span class="corner">№ 05</span>
+        <div class="caption">
+          <span class="title">If you can read this, you're already lost</span>
+          <span class="meta">Oil on canvas<br>2024</span>
+        </div>
+      </article>
+
+      <article class="work f reveal" style="aspect-ratio: 3508 / 2480;">
+        <div class="plate">
+          <image-slot id="work-6" shape="rect" src="assets/Yshtola_A3.jpg" placeholder="Drop artwork"></image-slot>
+        </div>
+        <span class="corner">№ 06</span>
+        <div class="caption">
+          <span class="title">Y'shtola, after the aether broke</span>
+          <span class="meta">Oil on canvas<br>2023</span>
+        </div>
+      </article>
+
+      <article class="work g reveal" style="aspect-ratio: 3508 / 4961;">
+        <div class="plate">
+          <image-slot id="work-7" shape="rect" src="assets/Cat_print.jpg" placeholder="Drop artwork"></image-slot>
+        </div>
+        <span class="corner">№ 07</span>
+        <div class="caption">
+          <span class="title">Familiar, sitting still in the draft</span>
+          <span class="meta">Oil on canvas<br>2024</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============== THE ARTIST ============== -->
+  <section id="about">
+    <header class="section-head reveal">
+      <div>
+        <div class="num">§ II — The artist</div>
+        <h2>The Artist</h2>
+      </div>
+    </header>
+
+    <div class="about">
+      <aside class="col-left reveal">
+        <figure class="portrait">
+          <img src="assets/photo.jpg" alt="Esteban Zupan">
+        </figure>
+      </aside>
+
+      <div class="col-right reveal">
+        <p class="lede">
+          I was born in 1993 in Arequipa, Peru, where I also grew up. I completed
+          a Bachelor’s degree in Architecture in Lima, followed by a Master’s
+          degree in Integrated Building Systems at ETH Zurich.
+        </p>
+
+        <p class="lede">
+          I taught myself to paint using online videos
+          and books. My style is rooted in years of studying the Old Masters —
+          Velázquez, Rembrandt, Vermeer, John Singer Sargent, and other artists
+          whose works continue to captivate me.
+        </p>
+
+        <p class="lede">
+          I build on their foundations while adding my own touch, blending
+          classical realism with dark and gothic themes. This fusion allows me
+          to honour the depth and discipline of traditional painting while
+          exploring subjects that are mysterious, dramatic, and emotionally
+          charged.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== CONTACT ============== -->
+  <section id="contact" class="contact">
+    <div class="eyebrow reveal">§ IV — Communion</div>
+    <h2 class="reveal">Write,<br>by candlelight.</h2>
+    <a href="mailto:atelier@estebanzupan.art" class="email reveal">atelier@estebanzupan.art</a>
+    <div class="socials reveal">
+      <a href="#">Instagram</a>
+      <a href="#">Pinterest</a>
+      <a href="#">LinkedIn</a>
+      <a href="#">Press Kit</a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span>© MMXXVI · Esteban Zupan</span>
+  <span class="seal">❧</span>
+  <span>Arequipa · Zurich · Lucerne</span>
+</footer>
+
+<!-- ============== TWEAKS PANEL ============== -->
+<style>
+  .tweaks-panel {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 2147483646;
+    width: 280px;
+    background: rgba(17, 10, 13, 0.92);
+    color: var(--bone-200);
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    box-shadow: 0 18px 48px rgba(0,0,0,0.7);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .tweaks-panel.open { display: flex; }
+  .tweaks-panel .hd {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-default);
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    color: var(--bone-100);
+  }
+  .tweaks-panel .hd .x {
+    cursor: pointer;
+    color: var(--bone-400);
+    background: none;
+    border: 0;
+    font-size: 14px;
+    line-height: 1;
+    padding: 4px 6px;
+  }
+  .tweaks-panel .hd .x:hover { color: var(--blood-500); }
+  .tweaks-panel .body {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .tweaks-panel .sect {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--blood-500);
+    margin-top: 4px;
+    margin-bottom: -4px;
+  }
+  .tweaks-panel label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--bone-300);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+  .tweaks-panel input[type="text"],
+  .tweaks-panel textarea {
+    background: var(--void-900);
+    color: var(--bone-100);
+    border: 1px solid var(--border-default);
+    padding: 8px 10px;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0;
+    border-radius: 2px;
+    outline: none;
+    resize: vertical;
+  }
+  .tweaks-panel input[type="text"]:focus,
+  .tweaks-panel textarea:focus {
+    border-color: var(--border-blood);
+  }
+  .tweaks-panel textarea { min-height: 56px; }
+</style>
+
+<div class="tweaks-panel" id="tweaks-panel">
+  <div class="hd">
+    <span>Tweaks</span>
+    <button class="x" id="tweaks-close" aria-label="Close">✕</button>
+  </div>
+  <div class="body">
+    <div class="sect">№ 02 — When Silence Talks</div>
+    <label>
+      Title (left)
+      <input type="text" id="tw-work2-title">
+    </label>
+    <label>
+      Meta (right)
+      <textarea id="tw-work2-meta"></textarea>
+    </label>
+  </div>
+</div>
+
+<script>
+  // ============================================
+  // PARALLAX — drives bg + skull layers
+  // ============================================
+  const skull = document.querySelector('.skull-layer');
+  const topbar = document.getElementById('topbar');
+
+  let scrollY = 0;
+  let targetY = 0;
+  let raf = null;
+
+  function update() {
+    const lerp = (a, b, t) => a + (b - a) * t;
+    scrollY = lerp(scrollY, targetY, 0.12);
+
+    // total scrollable distance — used to keep parallax bounded across the page
+    const docMax = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    const p = Math.min(1, scrollY / docMax); // 0 → 1 across the whole page
+
+    // background-position-y drives the cathedral image scan as you scroll
+    // image is ~2528 tall, viewport ~1100 — we slide from ~25% to ~65% of image
+    const bgPos = 25 + (Math.min(1, scrollY / 4000)) * 40;
+    document.documentElement.style.setProperty('--bgPos', bgPos.toFixed(2) + '%');
+
+    // Skull stays floating the whole journey.
+    // It rises gently (max ~38% of viewport height) and drifts horizontally
+    // in a slow arc, with subtle scale + tilt — never leaves the viewport.
+    const vh = window.innerHeight;
+    const skullY = -p * vh * 0.38;
+    // base offset to the right + gentle sway
+    const skullX = vh * 0.22 + Math.sin(p * Math.PI * 1.4) * vh * 0.08;
+    const skullS = 1 + p * 1.5;
+    const skullR = (Math.sin(p * Math.PI) * 4) - p * 2;
+
+    document.documentElement.style.setProperty('--skullY', skullY.toFixed(2) + 'px');
+    document.documentElement.style.setProperty('--skullX', skullX.toFixed(2) + 'px');
+    document.documentElement.style.setProperty('--skullS', skullS.toFixed(4));
+    document.documentElement.style.setProperty('--skullR', skullR.toFixed(3) + 'deg');
+
+    // Fade out the skull as we leave the hero / enter the second section.
+    // Starts fading once scrollY passes 70% of viewport, fully gone by 130%.
+    const vhVal = window.innerHeight;
+    const fadeStart = vhVal * 0.7;
+    const fadeEnd   = vhVal * 1.3;
+    const fade = 1 - Math.max(0, Math.min(1, (scrollY - fadeStart) / (fadeEnd - fadeStart)));
+    document.documentElement.style.setProperty('--skullO', fade.toFixed(3));
+
+    // topbar darken
+    if (targetY > 40) topbar.classList.add('scrolled');
+    else topbar.classList.remove('scrolled');
+
+    if (Math.abs(scrollY - targetY) > 0.5) {
+      raf = requestAnimationFrame(update);
+    } else {
+      raf = null;
+    }
+  }
+
+  window.addEventListener('scroll', () => {
+    targetY = window.scrollY || window.pageYOffset;
+    if (!raf) raf = requestAnimationFrame(update);
+  }, { passive: true });
+
+  // initial
+  targetY = window.scrollY || 0;
+  scrollY = targetY;
+  update();
+
+  // ============================================
+  // LIGHTNING STORM — strikes while scrolling
+  // ============================================
+  (function lightningStorm() {
+    const storm = document.querySelector('.storm');
+    const flash = document.getElementById('storm-flash');
+    if (!storm || !flash) return;
+
+    // Lightning bolt path generator — jagged vertical line with branches
+    function boltPath(width, height) {
+      const segments = 14 + Math.floor(Math.random() * 6);
+      const stepY = height / segments;
+      let x = width / 2;
+      let d = `M ${x.toFixed(1)} 0`;
+      const branches = [];
+      for (let i = 1; i <= segments; i++) {
+        const y = stepY * i;
+        x += (Math.random() - 0.5) * (width * 0.55);
+        x = Math.max(width * 0.05, Math.min(width * 0.95, x));
+        d += ` L ${x.toFixed(1)} ${y.toFixed(1)}`;
+        // 20% chance of a branch
+        if (Math.random() < 0.22 && i > 2 && i < segments - 1) {
+          let bx = x, by = y;
+          let bd = `M ${bx.toFixed(1)} ${by.toFixed(1)}`;
+          const bLen = 3 + Math.floor(Math.random() * 4);
+          const dir = Math.random() < 0.5 ? -1 : 1;
+          for (let j = 0; j < bLen; j++) {
+            bx += dir * (Math.random() * width * 0.18);
+            by += stepY * (0.5 + Math.random() * 0.6);
+            bd += ` L ${bx.toFixed(1)} ${by.toFixed(1)}`;
+          }
+          branches.push(bd);
+        }
+      }
+      return { main: d, branches };
+    }
+
+    // Storm only plays while the user is still in the hero. Once #works
+    // crosses the top of the viewport, the storm is silenced.
+    function stormActive() {
+      const works = document.getElementById('works');
+      if (!works) return true;
+      return works.getBoundingClientRect().top > window.innerHeight * 0.4;
+    }
+
+    function strike() {
+      if (!stormActive()) return;
+      const vw = window.innerWidth;
+      const w = Math.min(vw * 0.45, 520);
+      const h = window.innerHeight * 0.9;
+      const { main, branches } = boltPath(w, h);
+
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'bolt');
+      svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      svg.style.width  = w + 'px';
+      svg.style.height = h + 'px';
+      // Random horizontal position
+      const left = (Math.random() * 0.85 + 0.075) * vw - w / 2;
+      svg.style.left = left + 'px';
+      // Random slight tilt
+      svg.style.transform = `rotate(${(Math.random() - 0.5) * 14}deg)`;
+
+      const stroke = (d, sw, op) => {
+        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        p.setAttribute('d', d);
+        p.setAttribute('fill', 'none');
+        p.setAttribute('stroke', 'white');
+        p.setAttribute('stroke-width', sw);
+        p.setAttribute('stroke-linecap', 'round');
+        p.setAttribute('stroke-linejoin', 'round');
+        p.setAttribute('opacity', op);
+        return p;
+      };
+      // glow halo + crisp core
+      svg.appendChild(stroke(main, 8, 0.35));
+      svg.appendChild(stroke(main, 2.4, 1));
+      branches.forEach(b => {
+        svg.appendChild(stroke(b, 4, 0.25));
+        svg.appendChild(stroke(b, 1.2, 0.9));
+      });
+
+      const dur = 380 + Math.random() * 320; // 380–700ms
+      svg.style.animation = `boltStrike ${dur}ms cubic-bezier(.2,.7,.2,1) forwards`;
+      storm.appendChild(svg);
+
+      // synchronized flash
+      const peak = 0.55 + Math.random() * 0.35;
+      flash.style.setProperty('--peak', peak.toFixed(2));
+      flash.style.animation = 'none';
+      // force reflow
+      void flash.offsetWidth;
+      flash.style.animation = `flashPulse ${dur}ms cubic-bezier(.2,.7,.2,1) forwards`;
+
+      // cleanup
+      setTimeout(() => svg.remove(), dur + 60);
+
+      // occasional secondary strike (double flash)
+      if (Math.random() < 0.35) {
+        setTimeout(strike, 80 + Math.random() * 180);
+      }
+    }
+
+    // Drive strikes off scroll activity. The longer + faster the user scrolls,
+    // the higher the strike probability per scroll burst.
+    let lastY = window.scrollY;
+    let activity = 0;
+    let scrollEndT = null;
+    let lastStrike = 0;
+
+    function onScroll() {
+      if (!stormActive()) { activity = 0; return; }
+      const y = window.scrollY;
+      const dy = Math.abs(y - lastY);
+      lastY = y;
+      activity = Math.min(60, activity * 0.85 + dy);
+
+      const now = performance.now();
+      // Cool-down so we don't spam; probability scales with activity.
+      const cooldown = 380;
+      if (now - lastStrike > cooldown) {
+        const p = Math.min(0.5, activity / 220);
+        if (Math.random() < p) {
+          lastStrike = now;
+          strike();
+        }
+      }
+
+      clearTimeout(scrollEndT);
+      scrollEndT = setTimeout(() => { activity = 0; }, 220);
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // Occasional ambient strike, even when not scrolling (rare).
+    setInterval(() => {
+      if (document.hidden) return;
+      if (!stormActive()) return;
+      if (Math.random() < 0.06) strike();
+    }, 4200);
+  })();
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // ============================================
+  // TWEAKS — host protocol + live edits
+  // ============================================
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "work2Title": "When silence talks",
+    "work2Meta": "Oil on canvas\n80x120cm"
+  }/*EDITMODE-END*/;
+
+  const panel = document.getElementById('tweaks-panel');
+  const closeBtn = document.getElementById('tweaks-close');
+  const titleEl = document.querySelector('[data-tweak="work2Title"]');
+  const metaEl  = document.querySelector('[data-tweak="work2Meta"]');
+  const inTitle = document.getElementById('tw-work2-title');
+  const inMeta  = document.getElementById('tw-work2-meta');
+
+  const state = Object.assign({}, TWEAK_DEFAULTS);
+
+  function apply() {
+    if (titleEl) titleEl.textContent = state.work2Title;
+    // meta supports newline → <br>
+    if (metaEl) metaEl.innerHTML = String(state.work2Meta || '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\n/g, '<br>');
+    inTitle.value = state.work2Title;
+    inMeta.value  = state.work2Meta;
+  }
+  apply();
+
+  function persist(edits) {
+    Object.assign(state, edits);
+    apply();
+    try {
+      window.parent.postMessage({ type: '__edit_mode_set_keys', edits }, '*');
+    } catch (e) {}
+  }
+
+  inTitle.addEventListener('input', () => persist({ work2Title: inTitle.value }));
+  inMeta.addEventListener('input',  () => persist({ work2Meta:  inMeta.value }));
+
+  // host protocol
+  window.addEventListener('message', (e) => {
+    const d = e && e.data;
+    if (!d || typeof d !== 'object') return;
+    if (d.type === '__activate_edit_mode')   panel.classList.add('open');
+    if (d.type === '__deactivate_edit_mode') panel.classList.remove('open');
+  });
+  closeBtn.addEventListener('click', () => {
+    panel.classList.remove('open');
+    try { window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*'); } catch (e) {}
+  });
+  try { window.parent.postMessage({ type: '__edit_mode_available' }, '*'); } catch (e) {}
+</script>
+
+</body>
+</html>
