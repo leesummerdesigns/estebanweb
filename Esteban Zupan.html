@@ -9,6 +9,7 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
+  html { overflow-x: hidden; }
   body {
     position: relative;
     color: var(--fg-2);
@@ -253,7 +254,7 @@
     line-height: 0.92;
     color: var(--bone-100);
     letter-spacing: -0.01em;
-    margin: 0;
+    margin: min(200px, 20vh) 0 0;
     /* slight engraved feel */
     text-shadow:
       0 1px 0 rgba(0,0,0,0.6),
@@ -666,6 +667,41 @@
   footer .seal { color: var(--blood-700); font-family: var(--font-serif); font-size: 22px; font-style: italic; letter-spacing: 0; }
 
   /* =========================================================
+     MOBILE NAV — hamburger + overlay
+     ========================================================= */
+  .nav-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 28px;
+    height: 18px;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    padding: 0;
+    pointer-events: auto;
+    position: relative;
+    z-index: 40;
+  }
+  .nav-toggle span {
+    display: block;
+    width: 100%;
+    height: 1.5px;
+    background: var(--bone-300);
+    transform-origin: center;
+    transition: transform var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out);
+  }
+  .nav-toggle[aria-expanded="true"] span:nth-child(1) {
+    transform: translateY(8.25px) rotate(45deg);
+  }
+  .nav-toggle[aria-expanded="true"] span:nth-child(2) {
+    opacity: 0;
+  }
+  .nav-toggle[aria-expanded="true"] span:nth-child(3) {
+    transform: translateY(-8.25px) rotate(-45deg);
+  }
+
+  /* =========================================================
      RESPONSIVE
      ========================================================= */
   @media (max-width: 900px) {
@@ -678,7 +714,255 @@
     .section-head .aside { text-align: left; }
     .ledger .row { grid-template-columns: 60px 1fr; gap: var(--space-3); }
     .ledger .row .venue, .ledger .row .city { grid-column: 2; text-align: left; }
-    .topbar nav.menu { display: none; }
+    .nav-toggle { display: flex; }
+    nav.menu {
+      position: fixed;
+      inset: 0;
+      z-index: 29;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-8);
+      background: rgba(5, 3, 4, 0.97);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--dur-base) var(--ease-out);
+    }
+    nav.menu.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    nav.menu a {
+      font-family: var(--font-display);
+      font-size: clamp(40px, 12vw, 60px);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--bone-100);
+      border: 0;
+      padding: 4px 0;
+      line-height: 1;
+    }
+    nav.menu a:hover { color: var(--blood-400); }
+    nav.menu a::after { display: none; }
+    .hero h1 { letter-spacing: 0; }
+    .hero .lede { max-width: 100%; }
+    .hero .meta {
+      max-width: 100%;
+      line-height: 1.5;
+      letter-spacing: 0.12em;
+    }
+    .contact .email {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+    }
+    footer {
+      flex-wrap: wrap;
+      gap: var(--space-3);
+    }
+  }
+
+  @media (max-width: 640px) {
+    body {
+      background-attachment: scroll;
+      background-position: center top;
+    }
+
+    section {
+      padding: var(--space-8) clamp(18px, 5vw, 28px);
+    }
+
+    .topbar {
+      padding: 14px clamp(18px, 5vw, 28px);
+    }
+
+    .skull-inner {
+      width: min(54vh, 72vw);
+      opacity: 0.7;
+    }
+
+    .hero {
+      min-height: 100svh;
+      padding-top: 10vh;
+      padding-bottom: var(--space-8);
+      justify-content: flex-start;
+    }
+
+    .hero h1 {
+      margin-top: clamp(48px, 12vh, 96px) !important;
+      font-size: clamp(52px, 18vw, 76px);
+      line-height: 0.95;
+      letter-spacing: 0;
+    }
+
+    .hero .lede {
+      max-width: 100%;
+      margin-top: var(--space-5);
+      font-size: 18px;
+      line-height: 1.45;
+      text-wrap: pretty;
+    }
+
+    .hero .meta {
+      margin-top: var(--space-5);
+      display: block;
+      max-width: 30ch;
+      font-size: 10px;
+      line-height: 1.5;
+      letter-spacing: 0.08em;
+    }
+
+    .scroll-cue {
+      bottom: 18px;
+      font-size: 9px;
+      letter-spacing: 0.16em;
+    }
+
+    .scroll-cue .line {
+      height: 36px;
+    }
+
+    .section-head {
+      gap: var(--space-4);
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-4);
+    }
+
+    .section-head .num {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+    }
+
+    .section-head h2,
+    .contact h2 {
+      font-size: clamp(44px, 16vw, 64px);
+      line-height: 0.98;
+      letter-spacing: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .works {
+      column-count: 1;
+      column-gap: 0;
+    }
+
+    .work {
+      aspect-ratio: auto !important;
+      margin-bottom: var(--space-5);
+    }
+
+    .work .plate {
+      height: auto;
+    }
+
+    .work .plate image-slot {
+      height: auto;
+      aspect-ratio: var(--mobile-work-ratio, 1);
+    }
+
+    .work.a,
+    .work.b,
+    .work.g { --mobile-work-ratio: 3508 / 4961; }
+
+    .work.c { --mobile-work-ratio: 3393 / 3321; }
+
+    .work.d,
+    .work.e { --mobile-work-ratio: 2480 / 3508; }
+
+    .work.f { --mobile-work-ratio: 3508 / 2480; }
+
+    .work .caption {
+      position: static;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-2);
+      padding: 12px 14px 14px;
+      background: rgba(17, 10, 13, 0.9);
+      border-top: 1px solid var(--border-default);
+    }
+
+    .work .caption .title {
+      max-width: none;
+      font-size: 17px;
+      text-shadow: none;
+    }
+
+    .work .caption .meta {
+      font-size: 9px;
+      line-height: 1.45;
+      letter-spacing: 0.14em;
+      text-align: left;
+      text-shadow: none;
+    }
+
+    .work .corner {
+      top: 10px;
+      left: 12px;
+      font-size: 9px;
+      letter-spacing: 0.14em;
+    }
+
+    .about h3 {
+      font-size: clamp(40px, 14vw, 56px);
+      letter-spacing: 0;
+    }
+
+    .about .col-right p,
+    .about .col-right p.lede {
+      font-size: 18px;
+      line-height: 1.5;
+    }
+
+    .about .portrait {
+      max-width: 320px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .contact {
+      padding-top: var(--space-8);
+      padding-bottom: var(--space-8);
+    }
+
+    .contact .email {
+      max-width: 100%;
+      font-size: clamp(21px, 8vw, 30px);
+      overflow-wrap: anywhere;
+      line-height: 1.2;
+    }
+
+    .contact .socials {
+      flex-wrap: wrap;
+      gap: var(--space-3);
+      letter-spacing: 0.14em;
+    }
+
+    .contact .socials a {
+      padding: 9px 12px;
+    }
+
+    footer {
+      padding: var(--space-5) clamp(18px, 5vw, 28px);
+      flex-direction: column;
+      justify-content: center;
+      gap: var(--space-3);
+      text-align: center;
+      line-height: 1.5;
+      letter-spacing: 0.14em;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .hero h1 {
+      font-size: clamp(48px, 17vw, 62px);
+    }
+
+    .section-head h2,
+    .contact h2 {
+      font-size: clamp(40px, 15vw, 56px);
+    }
   }
 
   /* fade-up on enter */
@@ -704,7 +988,10 @@
 
 <!-- Top bar -->
 <header class="topbar" id="topbar">
-  <nav class="menu">
+  <button class="nav-toggle" id="nav-toggle" aria-label="Open navigation" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <nav class="menu" id="nav-menu" aria-hidden="true">
     <a href="#works">Works</a>
     <a href="#about">Artist</a>
     <a href="#contact">Contact</a>
@@ -715,8 +1002,8 @@
 
   <!-- ============== HERO ============== -->
   <section class="hero">
-    <h1 style="margin-top: 200px;">
-      Esteban
+    <h1>
+      Esteban<br>
       Zupan
     </h1>
     <p class="lede">
@@ -1025,8 +1312,11 @@
     const vh = window.innerHeight;
     const skullY = -p * vh * 0.38;
     // base offset to the right + gentle sway
-    const skullX = vh * 0.22 + Math.sin(p * Math.PI * 1.4) * vh * 0.08;
-    const skullS = 1 + p * 1.5;
+    const isMobile = window.innerWidth < 640;
+    const skullX = isMobile
+      ? Math.sin(p * Math.PI * 1.4) * vh * 0.05
+      : vh * 0.22 + Math.sin(p * Math.PI * 1.4) * vh * 0.08;
+    const skullS = isMobile ? 1 + p * 0.6 : 1 + p * 1.5;
     const skullR = (Math.sin(p * Math.PI) * 4) - p * 2;
 
     document.documentElement.style.setProperty('--skullY', skullY.toFixed(2) + 'px');
@@ -1062,6 +1352,34 @@
   targetY = window.scrollY || 0;
   scrollY = targetY;
   update();
+
+  // ============================================
+  // MOBILE NAV — hamburger toggle
+  // ============================================
+  (function mobileNav() {
+    const toggle = document.getElementById('nav-toggle');
+    const menu   = document.getElementById('nav-menu');
+    if (!toggle || !menu) return;
+
+    function open() {
+      menu.classList.add('open');
+      toggle.setAttribute('aria-expanded', 'true');
+      menu.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+    function close() {
+      menu.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+      menu.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    toggle.addEventListener('click', () =>
+      menu.classList.contains('open') ? close() : open()
+    );
+    menu.querySelectorAll('a').forEach(a => a.addEventListener('click', close));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+  })();
 
   // ============================================
   // LIGHTNING STORM — strikes while scrolling
