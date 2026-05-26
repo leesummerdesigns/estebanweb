@@ -122,52 +122,6 @@
     background-size: 240px 240px;
   }
 
-  /* =========================================================
-     LIGHTNING STORM — triggered while scrolling
-     ========================================================= */
-  .storm {
-    position: fixed;
-    inset: 0;
-    z-index: 55;
-    pointer-events: none;
-    overflow: hidden;
-  }
-  .storm .flash {
-    position: absolute;
-    inset: 0;
-    background: white;
-    opacity: 0;
-    mix-blend-mode: screen;
-    transition: opacity 80ms linear;
-  }
-  .storm .flash.dim { background: rgba(220, 230, 255, 0.6); }
-  .storm svg.bolt {
-    position: absolute;
-    top: -4vh;
-    width: auto;
-    height: 80vh;
-    opacity: 0;
-    filter:
-      drop-shadow(0 0 12px rgba(255,255,255,0.95))
-      drop-shadow(0 0 48px rgba(190, 210, 255, 0.75))
-      drop-shadow(0 0 120px rgba(140, 170, 255, 0.4));
-    transform-origin: top center;
-    will-change: opacity, transform;
-  }
-  @keyframes boltStrike {
-    0%   { opacity: 0; transform: scaleY(0.1) translateY(-10px); }
-    8%   { opacity: 1; transform: scaleY(1) translateY(0); }
-    14%  { opacity: 0.2; }
-    22%  { opacity: 1; }
-    100% { opacity: 0; transform: scaleY(1) translateY(0); }
-  }
-  @keyframes flashPulse {
-    0%   { opacity: 0; }
-    8%   { opacity: var(--peak, 0.85); }
-    20%  { opacity: 0.1; }
-    32%  { opacity: var(--peak, 0.85); }
-    100% { opacity: 0; }
-  }
 
   /* OLD: removed — skull is now inside .parallax-stage as sticky */
   /* soft halo behind the skull */
@@ -991,9 +945,6 @@
   </div>
 </div>
 <div class="grain"></div>
-<div class="storm" aria-hidden="true">
-  <div class="flash" id="storm-flash"></div>
-</div>
 
 <!-- Top bar -->
 <header class="topbar" id="topbar">
@@ -1370,146 +1321,6 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
   })();
 
-  // ============================================
-  // LIGHTNING STORM — strikes while scrolling
-  // ============================================
-  (function lightningStorm() {
-    const storm = document.querySelector('.storm');
-    const flash = document.getElementById('storm-flash');
-    if (!storm || !flash) return;
-
-    // Lightning bolt path generator — jagged vertical line with branches
-    function boltPath(width, height) {
-      const segments = 14 + Math.floor(Math.random() * 6);
-      const stepY = height / segments;
-      let x = width / 2;
-      let d = `M ${x.toFixed(1)} 0`;
-      const branches = [];
-      for (let i = 1; i <= segments; i++) {
-        const y = stepY * i;
-        x += (Math.random() - 0.5) * (width * 0.55);
-        x = Math.max(width * 0.05, Math.min(width * 0.95, x));
-        d += ` L ${x.toFixed(1)} ${y.toFixed(1)}`;
-        // 20% chance of a branch
-        if (Math.random() < 0.22 && i > 2 && i < segments - 1) {
-          let bx = x, by = y;
-          let bd = `M ${bx.toFixed(1)} ${by.toFixed(1)}`;
-          const bLen = 3 + Math.floor(Math.random() * 4);
-          const dir = Math.random() < 0.5 ? -1 : 1;
-          for (let j = 0; j < bLen; j++) {
-            bx += dir * (Math.random() * width * 0.18);
-            by += stepY * (0.5 + Math.random() * 0.6);
-            bd += ` L ${bx.toFixed(1)} ${by.toFixed(1)}`;
-          }
-          branches.push(bd);
-        }
-      }
-      return { main: d, branches };
-    }
-
-    // Storm only plays while the user is still in the hero. Once #works
-    // crosses the top of the viewport, the storm is silenced.
-    function stormActive() {
-      const works = document.getElementById('works');
-      if (!works) return true;
-      return works.getBoundingClientRect().top > window.innerHeight * 0.4;
-    }
-
-    function strike() {
-      if (!stormActive()) return;
-      const vw = window.innerWidth;
-      const w = Math.min(vw * 0.45, 520);
-      const h = window.innerHeight * 0.9;
-      const { main, branches } = boltPath(w, h);
-
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('class', 'bolt');
-      svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-      svg.style.width  = w + 'px';
-      svg.style.height = h + 'px';
-      // Random horizontal position
-      const left = (Math.random() * 0.85 + 0.075) * vw - w / 2;
-      svg.style.left = left + 'px';
-      // Random slight tilt
-      svg.style.transform = `rotate(${(Math.random() - 0.5) * 14}deg)`;
-
-      const stroke = (d, sw, op) => {
-        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        p.setAttribute('d', d);
-        p.setAttribute('fill', 'none');
-        p.setAttribute('stroke', 'white');
-        p.setAttribute('stroke-width', sw);
-        p.setAttribute('stroke-linecap', 'round');
-        p.setAttribute('stroke-linejoin', 'round');
-        p.setAttribute('opacity', op);
-        return p;
-      };
-      // glow halo + crisp core
-      svg.appendChild(stroke(main, 8, 0.35));
-      svg.appendChild(stroke(main, 2.4, 1));
-      branches.forEach(b => {
-        svg.appendChild(stroke(b, 4, 0.25));
-        svg.appendChild(stroke(b, 1.2, 0.9));
-      });
-
-      const dur = 380 + Math.random() * 320; // 380–700ms
-      svg.style.animation = `boltStrike ${dur}ms cubic-bezier(.2,.7,.2,1) forwards`;
-      storm.appendChild(svg);
-
-      // synchronized flash
-      const peak = 0.55 + Math.random() * 0.35;
-      flash.style.setProperty('--peak', peak.toFixed(2));
-      flash.style.animation = 'none';
-      // force reflow
-      void flash.offsetWidth;
-      flash.style.animation = `flashPulse ${dur}ms cubic-bezier(.2,.7,.2,1) forwards`;
-
-      // cleanup
-      setTimeout(() => svg.remove(), dur + 60);
-
-      // occasional secondary strike (double flash)
-      if (Math.random() < 0.35) {
-        setTimeout(strike, 80 + Math.random() * 180);
-      }
-    }
-
-    // Drive strikes off scroll activity. The longer + faster the user scrolls,
-    // the higher the strike probability per scroll burst.
-    let lastY = window.scrollY;
-    let activity = 0;
-    let scrollEndT = null;
-    let lastStrike = 0;
-
-    function onScroll() {
-      if (!stormActive()) { activity = 0; return; }
-      const y = window.scrollY;
-      const dy = Math.abs(y - lastY);
-      lastY = y;
-      activity = Math.min(60, activity * 0.85 + dy);
-
-      const now = performance.now();
-      // Cool-down so we don't spam; probability scales with activity.
-      const cooldown = 380;
-      if (now - lastStrike > cooldown) {
-        const p = Math.min(0.5, activity / 220);
-        if (Math.random() < p) {
-          lastStrike = now;
-          strike();
-        }
-      }
-
-      clearTimeout(scrollEndT);
-      scrollEndT = setTimeout(() => { activity = 0; }, 220);
-    }
-    window.addEventListener('scroll', onScroll, { passive: true });
-
-    // Occasional ambient strike, even when not scrolling (rare).
-    setInterval(() => {
-      if (document.hidden) return;
-      if (!stormActive()) return;
-      if (Math.random() < 0.06) strike();
-    }, 4200);
-  })();
   const io = new IntersectionObserver((entries) => {
     entries.forEach(e => {
       if (e.isIntersecting) {
