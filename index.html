@@ -934,7 +934,6 @@
   /* =========================================================
      LIGHTBOX
      ========================================================= */
-  .work { cursor: zoom-in; }
 
   #lightbox {
     display: none;
@@ -1436,9 +1435,25 @@
 
   // ── Lightbox ────────────────────────────────────────────────────────────
   (function lightbox() {
-    const lb    = document.getElementById('lightbox');
-    const lbImg = document.getElementById('lightbox-img');
-    const closeBtn = document.getElementById('lightbox-close');
+    // Build DOM here so order vs. the </script> tag doesn't matter
+    const lb = document.createElement('div');
+    lb.id = 'lightbox';
+    lb.setAttribute('role', 'dialog');
+    lb.setAttribute('aria-modal', 'true');
+    lb.setAttribute('aria-label', 'Full screen image');
+
+    const xBtn = document.createElement('button');
+    xBtn.id = 'lightbox-close';
+    xBtn.setAttribute('aria-label', 'Close');
+    xBtn.textContent = '✕';
+
+    const lbImg = document.createElement('img');
+    lbImg.id = 'lightbox-img';
+    lbImg.alt = '';
+
+    lb.appendChild(xBtn);
+    lb.appendChild(lbImg);
+    document.body.appendChild(lb);
 
     function open(src) {
       lbImg.src = src;
@@ -1452,25 +1467,27 @@
       lbImg.src = '';
     }
 
+    // Use an overlay div per painting so clicks are reliable regardless of
+    // how the image-slot shadow DOM handles events internally
     document.querySelectorAll('.work').forEach(article => {
-      article.addEventListener('click', () => {
-        const slot = article.querySelector('image-slot');
-        if (!slot) return;
+      const slot = article.querySelector('image-slot');
+      if (!slot) return;
+      const plate = article.querySelector('.plate');
+      if (!plate) return;
+      const trigger = document.createElement('div');
+      trigger.style.cssText = 'position:absolute;inset:0;z-index:5;cursor:zoom-in;';
+      trigger.addEventListener('click', () => {
         const src = slot.getAttribute('src');
         if (src) open(src);
       });
+      plate.appendChild(trigger);
     });
 
-    closeBtn.addEventListener('click', close);
+    xBtn.addEventListener('click', close);
     lb.addEventListener('click', e => { if (e.target === lb) close(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
   })();
 </script>
-
-<div id="lightbox" role="dialog" aria-modal="true" aria-label="Full screen image">
-  <button id="lightbox-close" aria-label="Close">&#x2715;</button>
-  <img id="lightbox-img" src="" alt="">
-</div>
 
 </body>
 </html>
