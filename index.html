@@ -753,14 +753,15 @@
       pointer-events: auto;
     }
     nav.menu a {
-      font-family: var(--font-display);
-      font-size: clamp(40px, 12vw, 60px);
-      letter-spacing: 0.02em;
+      font-family: var(--font-inscription);
+      font-size: clamp(32px, 10vw, 52px);
+      letter-spacing: 0.18em;
       text-transform: uppercase;
       color: var(--bone-100);
       border: 0;
       padding: 4px 0;
       line-height: 1;
+      font-weight: 400;
     }
     nav.menu a:hover { color: var(--blood-400); }
     nav.menu a::after { display: none; }
@@ -1047,10 +1048,6 @@
           <image-slot id="work-1" shape="rect" src="assets/Flowers_A3.jpg" placeholder="Drop artwork"></image-slot>
         </div>
         <span class="corner">№ 01</span>
-        <div class="caption">
-          <span class="title">Saint Velora, sleeping through the second cantor</span>
-          <span class="meta">Oil · linen · 180×140<br>2024</span>
-        </div>
       </article>
 
       <article class="work b reveal" style="aspect-ratio: 3508 / 4961;">
@@ -1058,10 +1055,6 @@
           <image-slot id="work-2" shape="rect" src="assets/CatLady_A3.jpg" placeholder="Drop artwork"></image-slot>
         </div>
         <span class="corner">№ 02</span>
-        <div class="caption">
-          <span class="title" data-tweak="work2Title">When silence talks</span>
-          <span class="meta" data-tweak="work2Meta">Oil on canvas<br>80x120cm</span>
-        </div>
       </article>
 
       <article class="work c reveal" style="aspect-ratio: 3393 / 3321;">
@@ -1069,10 +1062,6 @@
           <image-slot id="work-3" shape="rect" src="assets/Final_photo.jpg" placeholder="Drop artwork"></image-slot>
         </div>
         <span class="corner">№ 03</span>
-        <div class="caption">
-          <span class="title">Moth litany, in seven movements</span>
-          <span class="meta">Triptych<br>2022</span>
-        </div>
       </article>
 
       <article class="work d reveal" style="aspect-ratio: 2480 / 3508;">
@@ -1080,10 +1069,6 @@
           <image-slot id="work-4" shape="rect" src="assets/Leopard_Print.jpg" placeholder="Drop artwork"></image-slot>
         </div>
         <span class="corner">№ 04</span>
-        <div class="caption">
-          <span class="title">The leopard's afternoon</span>
-          <span class="meta">Oil on canvas<br>2025</span>
-        </div>
       </article>
 
       <article class="work e reveal" style="aspect-ratio: 2480 / 3508;">
@@ -1091,10 +1076,6 @@
           <image-slot id="work-5" shape="rect" src="assets/Squirrel_A3.jpg" placeholder="Drop artwork"></image-slot>
         </div>
         <span class="corner">№ 05</span>
-        <div class="caption">
-          <span class="title">If you can read this, you're already lost</span>
-          <span class="meta">Oil on canvas<br>2024</span>
-        </div>
       </article>
 
       <article class="work f reveal" style="aspect-ratio: 3508 / 2480;">
@@ -1102,10 +1083,6 @@
           <image-slot id="work-6" shape="rect" src="assets/Yshtola_A3.jpg" placeholder="Drop artwork"></image-slot>
         </div>
         <span class="corner">№ 06</span>
-        <div class="caption">
-          <span class="title">Y'shtola, after the aether broke</span>
-          <span class="meta">Oil on canvas<br>2023</span>
-        </div>
       </article>
 
       <article class="work g reveal" style="aspect-ratio: 3508 / 4961;">
@@ -1113,10 +1090,6 @@
           <image-slot id="work-7" shape="rect" src="assets/Cat_print.jpg" placeholder="Drop artwork"></image-slot>
         </div>
         <span class="corner">№ 07</span>
-        <div class="caption">
-          <span class="title">Familiar, sitting still in the draft</span>
-          <span class="meta">Oil on canvas<br>2024</span>
-        </div>
       </article>
     </div>
   </section>
@@ -1369,17 +1342,25 @@
     const menu   = document.getElementById('nav-menu');
     if (!toggle || !menu) return;
 
+    let savedScroll = 0;
+
     function open() {
+      savedScroll = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${savedScroll}px`;
+      document.body.style.width = '100%';
       menu.classList.add('open');
       toggle.setAttribute('aria-expanded', 'true');
       menu.setAttribute('aria-hidden', 'false');
-      document.body.style.overflow = 'hidden';
     }
     function close() {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, savedScroll);
       menu.classList.remove('open');
       toggle.setAttribute('aria-expanded', 'false');
       menu.setAttribute('aria-hidden', 'true');
-      document.body.style.overflow = '';
     }
 
     toggle.addEventListener('click', () =>
