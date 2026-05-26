@@ -21,6 +21,22 @@
     background-size: cover;
     background-position: center var(--bgPos, 35%);
   }
+  /* Mobile background — fixed div replaces background-attachment:fixed (iOS buggy) */
+  .mobile-bg { display: none; }
+  @media (max-width: 900px) {
+    .mobile-bg {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background-image: url('assets/gothicbackground.png');
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+    }
+    body { background-image: none; }
+  }
+
   /* Veil sits over the body bg — fixed to viewport so it tracks scroll */
   .veil {
     position: fixed;
@@ -766,12 +782,6 @@
   }
 
   @media (max-width: 640px) {
-    body {
-      background-attachment: scroll;
-      background-position: center center;
-      background-size: auto 100vh;
-    }
-
     section {
       padding: var(--space-8) clamp(18px, 5vw, 28px);
     }
@@ -970,6 +980,7 @@
 <body>
 
 <!-- Fixed background layers -->
+<div class="mobile-bg" aria-hidden="true"></div>
 <div class="veil"></div>
 <div class="parallax-stage" aria-hidden="true">
   <div class="skull-layer">
