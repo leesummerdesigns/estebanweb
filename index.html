@@ -955,11 +955,6 @@
     display: block;
     border: 1px solid var(--border-default);
     box-shadow: 0 32px 80px rgba(0,0,0,0.7);
-    animation: lbIn 0.22s var(--ease-out) both;
-  }
-  @keyframes lbIn {
-    from { opacity: 0; transform: scale(0.94); }
-    to   { opacity: 1; transform: scale(1); }
   }
 
   #lightbox-close {
@@ -1264,6 +1259,11 @@
   </div>
 </div>
 
+<div id="lightbox">
+  <button id="lightbox-close" aria-label="Close">&#x2715;</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
 <script>
   // ============================================
   // PARALLAX — drives bg + skull layers
@@ -1434,58 +1434,33 @@
   try { window.parent.postMessage({ type: '__edit_mode_available' }, '*'); } catch (e) {}
 
   // ── Lightbox ────────────────────────────────────────────────────────────
-  (function lightbox() {
-    // Build DOM here so order vs. the </script> tag doesn't matter
-    const lb = document.createElement('div');
-    lb.id = 'lightbox';
-    lb.setAttribute('role', 'dialog');
-    lb.setAttribute('aria-modal', 'true');
-    lb.setAttribute('aria-label', 'Full screen image');
+  (function () {
+    const lb    = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lightbox-img');
+    const xBtn  = document.getElementById('lightbox-close');
 
-    const xBtn = document.createElement('button');
-    xBtn.id = 'lightbox-close';
-    xBtn.setAttribute('aria-label', 'Close');
-    xBtn.textContent = '✕';
-
-    const lbImg = document.createElement('img');
-    lbImg.id = 'lightbox-img';
-    lbImg.alt = '';
-
-    lb.appendChild(xBtn);
-    lb.appendChild(lbImg);
-    document.body.appendChild(lb);
-
-    function open(src) {
+    function lbOpen(src) {
       lbImg.src = src;
       lb.classList.add('open');
-      document.body.style.overflow = 'hidden';
     }
-
-    function close() {
+    function lbClose() {
       lb.classList.remove('open');
-      document.body.style.overflow = '';
       lbImg.src = '';
     }
 
-    // Use an overlay div per painting so clicks are reliable regardless of
-    // how the image-slot shadow DOM handles events internally
-    document.querySelectorAll('.work').forEach(article => {
-      const slot = article.querySelector('image-slot');
+    document.querySelectorAll('.work').forEach(function (article) {
+      var slot = article.querySelector('image-slot');
       if (!slot) return;
-      const plate = article.querySelector('.plate');
-      if (!plate) return;
-      const trigger = document.createElement('div');
-      trigger.style.cssText = 'position:absolute;inset:0;z-index:5;cursor:zoom-in;';
-      trigger.addEventListener('click', () => {
-        const src = slot.getAttribute('src');
-        if (src) open(src);
+      article.style.cursor = 'zoom-in';
+      article.addEventListener('click', function () {
+        var src = slot.getAttribute('src');
+        if (src) lbOpen(src);
       });
-      plate.appendChild(trigger);
     });
 
-    xBtn.addEventListener('click', close);
-    lb.addEventListener('click', e => { if (e.target === lb) close(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    xBtn.addEventListener('click', lbClose);
+    lb.addEventListener('click', function (e) { if (e.target === lb) lbClose(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') lbClose(); });
   })();
 </script>
 
